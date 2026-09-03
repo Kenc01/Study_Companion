@@ -12,17 +12,8 @@ import {
   gradeMcqAnswer,
   gradeMultiAnswer,
 } from "@/lib/matchAnswer";
-import { buildSampleTopics } from "@/lib/sampleData";
 import { isDue, qualityFromResult, schedule } from "@/lib/srs";
-import {
-  loadMastery,
-  loadSettings,
-  loadTopics,
-  masteryKey,
-  saveMastery,
-  saveSettings,
-  saveTopics,
-} from "@/lib/storage";
+import { loadSettings, masteryKey, saveSettings } from "@/lib/storage";
 import {
   DEFAULT_SETTINGS,
   MASTERY_THRESHOLD,
@@ -135,12 +126,8 @@ export interface UseQuizState {
 }
 
 export function useQuizState(): UseQuizState {
-  const [topics, setTopics] = React.useState<Topic[]>(() => {
-    const stored = loadTopics();
-    if (stored === null) return buildSampleTopics();
-    return stored;
-  });
-  const [mastery, setMastery] = React.useState<MasteryMap>(() => loadMastery());
+  const [topics, setTopics] = React.useState<Topic[]>([]);
+  const [mastery, setMastery] = React.useState<MasteryMap>({});
   const [settings, setSettings] = React.useState<Settings>(() =>
     loadSettings(),
   );
@@ -156,14 +143,6 @@ export function useQuizState(): UseQuizState {
   const [sessionElapsedMs, setSessionElapsedMs] = React.useState<number>(0);
 
   /* ---------------------------- persistence ---------------------------- */
-  React.useEffect(() => {
-    saveTopics(topics);
-  }, [topics]);
-
-  React.useEffect(() => {
-    saveMastery(mastery);
-  }, [mastery]);
-
   React.useEffect(() => {
     saveSettings(settings);
   }, [settings]);
@@ -832,7 +811,7 @@ export function useQuizState(): UseQuizState {
   );
 
   const resetAllData = React.useCallback(() => {
-    setTopics(buildSampleTopics());
+    setTopics([]);
     setMastery({});
     setSession(null);
     setLastSession(null);
