@@ -3,6 +3,7 @@ import {
   type MasteryRecord,
   type Question,
   type Settings,
+  type Subject,
   type Theme,
   type Topic,
 } from "./types";
@@ -10,6 +11,7 @@ import {
 export type { Settings, Theme };
 
 const TOPICS_KEY = "study-companion:topics:v2";
+const SUBJECTS_KEY = "study-companion:subjects:v1";
 const MASTERY_KEY = "study-companion:mastery:v2";
 const SETTINGS_KEY = "study-companion:settings:v1";
 
@@ -94,6 +96,23 @@ function sanitizeTopics(topics: unknown): Topic[] {
     if (migrated) out.push(migrated);
   }
   return out;
+}
+
+function sanitizeSubjects(value: unknown): Subject[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter(isRecord)
+    .map((subject, index) => ({
+      id: typeof subject.id === "string" ? subject.id : `subject_${index}`,
+      name: typeof subject.name === "string" ? subject.name.trim() : "",
+      color:
+        typeof subject.color === "number"
+          ? Math.max(0, Math.min(5, subject.color))
+          : index % 6,
+      createdAt: Number(subject.createdAt) || Date.now(),
+      updatedAt: Number(subject.updatedAt) || Date.now(),
+    }))
+    .filter((subject) => subject.name.length > 0);
 }
 
 function sanitizeMastery(map: MasteryMap): MasteryMap {
@@ -245,6 +264,20 @@ export function loadTopics(): Topic[] | null {
 
 export function saveTopics(topics: Topic[]) {
   safeWrite(TOPICS_KEY, topics);
+}
+
+export function loadSubjects(): Subject[] | null {
+  if (typeof window === "undefined") return null;
+  try {
+    if (window.localStorage.getItem(SUBJECTS_KEY) === null) return null;
+  } catch {
+    return null;
+  }
+  return sanitizeSubjects(safeRead<unknown[]>(SUBJECTS_KEY, [], Array.isArray));
+}
+
+export function saveSubjects(subjects: Subject[]) {
+  safeWrite(SUBJECTS_KEY, subjects);
 }
 
 export function loadMastery(): MasteryMap {

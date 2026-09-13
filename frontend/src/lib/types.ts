@@ -1,5 +1,6 @@
 export type Screen =
   | "home"
+  | "subject"
   | "paste"
   | "import"
   | "quiz"
@@ -57,6 +58,14 @@ export interface Topic {
   createdAt: number;
   updatedAt: number;
   lastStudiedAt?: number;
+}
+
+export interface Subject {
+  id: string;
+  name: string;
+  color?: number;
+  createdAt: number;
+  updatedAt: number;
 }
 
 /** SM-2 spaced-repetition record for a single card. */
@@ -193,6 +202,7 @@ export interface StudyCompanionExport {
   version: 2;
   exportedAt: number;
   topics: Topic[];
+  subjects?: Subject[];
   mastery: MasteryMap;
   settings: Settings;
 }

@@ -15,6 +15,14 @@ interface TopicDocument extends mongoose.Document {
   lastStudiedAt?: number;
 }
 
+interface SubjectDocument extends mongoose.Document {
+  id: string;
+  name: string;
+  color?: number;
+  createdAt: number;
+  updatedAt: number;
+}
+
 interface MasteryDocument extends mongoose.Document {
   key: string;
   topicId: string;
@@ -28,32 +36,51 @@ interface MasteryDocument extends mongoose.Document {
   srs?: unknown;
 }
 
-const topicSchema = new mongoose.Schema<TopicDocument>({
-  id: { type: String, required: true, unique: true, index: true },
-  name: { type: String, required: true, trim: true },
-  tags: { type: [String], default: [] },
-  color: { type: Number, min: 0, max: 5 },
-  rawNotes: { type: String, default: "" },
-  questions: { type: [mongoose.Schema.Types.Mixed], default: [] },
-  createdAt: { type: Number, required: true },
-  updatedAt: { type: Number, required: true },
-  lastStudiedAt: { type: Number }
-}, { versionKey: false });
+const topicSchema = new mongoose.Schema<TopicDocument>(
+  {
+    id: { type: String, required: true, unique: true, index: true },
+    name: { type: String, required: true, trim: true },
+    tags: { type: [String], default: [] },
+    color: { type: Number, min: 0, max: 5 },
+    rawNotes: { type: String, default: "" },
+    questions: { type: [mongoose.Schema.Types.Mixed], default: [] },
+    createdAt: { type: Number, required: true },
+    updatedAt: { type: Number, required: true },
+    lastStudiedAt: { type: Number },
+  },
+  { versionKey: false },
+);
 
 const Topic = mongoose.model<TopicDocument>("Topic", topicSchema);
 
-const masterySchema = new mongoose.Schema<MasteryDocument>({
-  key: { type: String, required: true, unique: true, index: true },
-  topicId: { type: String, required: true },
-  questionId: { type: String, required: true },
-  streak: { type: Number, required: true, min: 0 },
-  mastered: { type: Boolean, required: true },
-  correctCount: { type: Number, required: true, min: 0 },
-  attempts: { type: Number, required: true, min: 0 },
-  lastSeenAt: { type: Number, required: true },
-  bookmarked: { type: Boolean },
-  srs: { type: mongoose.Schema.Types.Mixed }
-}, { versionKey: false });
+const subjectSchema = new mongoose.Schema<SubjectDocument>(
+  {
+    id: { type: String, required: true, unique: true, index: true },
+    name: { type: String, required: true, trim: true },
+    color: { type: Number, min: 0, max: 5 },
+    createdAt: { type: Number, required: true },
+    updatedAt: { type: Number, required: true },
+  },
+  { versionKey: false },
+);
+
+const Subject = mongoose.model<SubjectDocument>("Subject", subjectSchema);
+
+const masterySchema = new mongoose.Schema<MasteryDocument>(
+  {
+    key: { type: String, required: true, unique: true, index: true },
+    topicId: { type: String, required: true },
+    questionId: { type: String, required: true },
+    streak: { type: Number, required: true, min: 0 },
+    mastered: { type: Boolean, required: true },
+    correctCount: { type: Number, required: true, min: 0 },
+    attempts: { type: Number, required: true, min: 0 },
+    lastSeenAt: { type: Number, required: true },
+    bookmarked: { type: Boolean },
+    srs: { type: mongoose.Schema.Types.Mixed },
+  },
+  { versionKey: false },
+);
 
 const Mastery = mongoose.model<MasteryDocument>("Mastery", masterySchema);
 
@@ -66,7 +93,8 @@ app.use(express.json());
 // Connect to MongoDB
 const mongoUri = process.env.MONGODB_URI;
 if (mongoUri) {
-  mongoose.connect(mongoUri)
+  mongoose
+    .connect(mongoUri)
     .then(() => console.log("✅ Successfully connected to MongoDB!"))
     .catch((err) => console.error("❌ Failed to connect to MongoDB:", err));
 } else {
@@ -76,9 +104,10 @@ if (mongoUri) {
 app.get("/api/status", (_req, res) => {
   res.json({
     status: mongoose.connection.readyState === 1 ? "ok" : "degraded",
-    database: mongoose.connection.readyState === 1 ? "connected" : "disconnected",
+    database:
+      mongoose.connection.readyState === 1 ? "connected" : "disconnected",
     message: "Backend is running successfully!",
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 });
 
@@ -107,7 +136,7 @@ app.put("/api/topics/:id", async (req, res) => {
     const topic = await Topic.findOneAndUpdate(
       { id: req.params.id },
       { ...req.body, id: req.params.id, updatedAt: Date.now() },
-      { new: true, runValidators: true }
+      { new: true, runValidators: true },
     );
     if (!topic) {
       res.status(404).json({ error: "Topic not found" });
@@ -134,6 +163,26 @@ app.delete("/api/topics/:id", async (req, res) => {
   }
 });
 
+app.get("/api/subjects", async (_req, res) => {
+  try {
+    const subjects = await Subject.find().sort({ updatedAt: -1 }).lean();
+    res.json(subjects);
+  } catch (error) {
+    console.error("Failed to load subjects:", error);
+    res.status(500).json({ error: "Failed to load subjects" });
+  }
+});
+
+app.post("/api/subjects", async (req, res) => {
+  try {
+    const subject = await Subject.create(req.body);
+    res.status(201).json(subject);
+  } catch (error) {
+    console.error("Failed to create subject:", error);
+    res.status(400).json({ error: "Invalid subject data" });
+  }
+});
+
 app.get("/api/mastery", async (_req, res) => {
   try {
     const records = await Mastery.find().lean();
@@ -151,7 +200,12 @@ app.put("/api/mastery/:topicId/:questionId", async (req, res) => {
     const record = await Mastery.findOneAndUpdate(
       { key },
       { ...req.body, key, topicId, questionId },
-      { new: true, upsert: true, runValidators: true, setDefaultsOnInsert: true }
+      {
+        new: true,
+        upsert: true,
+        runValidators: true,
+        setDefaultsOnInsert: true,
+      },
     );
     res.json(record);
   } catch (error) {

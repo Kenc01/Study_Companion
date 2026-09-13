@@ -21,13 +21,15 @@ import { TopicCard } from "@/components/TopicCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { TopicStats } from "@/hooks/useQuizState";
-import type { Question, Settings, Topic } from "@/lib/types";
+import type { Question, Settings, Subject, Topic } from "@/lib/types";
 import { plural } from "@/lib/utils";
 
 interface HomeScreenProps {
   topics: Topic[];
+  subjects: Subject[];
   getTopicStats: (topic: Topic) => TopicStats;
   onCreate: (subject?: string) => void;
+  onCreateSubject: () => void;
   onImport: () => void;
   onSettings: () => void;
   onEdit: (topicId: string) => void;
@@ -78,8 +80,10 @@ function SummaryTile({
 
 export function HomeScreen({
   topics,
+  subjects,
   getTopicStats,
   onCreate,
+  onCreateSubject,
   onImport,
   onSettings,
   onEdit,
@@ -145,7 +149,15 @@ export function HomeScreen({
     });
   }, [topics, searchQuery, tagFilter]);
 
-  const hasTopics = topics.length > 0;
+  const subjectNames = React.useMemo(
+    () =>
+      new Set([
+        ...subjects.map((subject) => subject.name),
+        ...topics.map((topic) => topic.subject || topic.name),
+      ]),
+    [subjects, topics],
+  );
+  const hasTopics = subjectNames.size > 0;
   const hasDue = totals.due > 0;
 
   return (
@@ -194,9 +206,7 @@ export function HomeScreen({
                   aria-hidden="true"
                 />
               }
-              value={String(
-                new Set(topics.map((t) => t.subject || t.name)).size,
-              )}
+              value={String(subjectNames.size)}
               label="Subjects"
               tint="bg-primary-soft"
             />
@@ -310,7 +320,9 @@ export function HomeScreen({
             </Button>
             <Button
               variant="secondary"
-              onClick={() => onCreate(selectedSubject ?? undefined)}
+              onClick={() =>
+                selectedSubject ? onCreate(selectedSubject) : onCreateSubject()
+              }
             >
               <Plus aria-hidden="true" />
               {selectedSubject ? "New Quiz" : "New Subject"}
@@ -406,11 +418,21 @@ export function HomeScreen({
               </div>
             )}
           </>
-        ) : filteredTopics.length > 0 ? (
+        ) : subjectNames.size > 0 ? (
           <ul className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
             <AnimatePresence mode="popLayout">
-              {[...new Set(filteredTopics.map((t) => t.subject || t.name))].map(
-                (subject, i) => {
+              {[...subjectNames]
+                .filter((subject) => {
+                  const query = searchQuery.trim().toLowerCase();
+                  return (
+                    !query ||
+                    subject.toLowerCase().includes(query) ||
+                    filteredTopics.some(
+                      (t) => (t.subject || t.name) === subject,
+                    )
+                  );
+                })
+                .map((subject, i) => {
                   const subjectTopics = filteredTopics.filter(
                     (t) => (t.subject || t.name) === subject,
                   );
@@ -458,8 +480,7 @@ export function HomeScreen({
                       </button>
                     </motion.li>
                   );
-                },
-              )}
+                })}
             </AnimatePresence>
           </ul>
         ) : hasTopics ? (
@@ -467,11 +488,11 @@ export function HomeScreen({
             <p className="text-sm text-ink-soft">
               {searchQuery || tagFilter
                 ? "No topics match your search. Try different keywords or clear filters."
-                : "No topics yet."}
+                : "No quizzes in this subject yet."}
             </p>
           </div>
         ) : (
-          <EmptyTopicsState onCreate={onCreate} onImport={onImport} />
+          <EmptyTopicsState onCreate={onCreateSubject} onImport={onImport} />
         )}
       </main>
 

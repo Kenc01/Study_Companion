@@ -1,9 +1,11 @@
 import * as React from "react";
 import {
   createRemoteTopic,
+  createRemoteSubject,
   deleteRemoteTopic,
   loadRemoteMastery,
   loadRemoteTopics,
+  loadRemoteSubjects,
   saveRemoteMastery,
   updateRemoteTopic,
 } from "@/lib/api";
@@ -13,7 +15,13 @@ import {
   gradeMultiAnswer,
 } from "@/lib/matchAnswer";
 import { isDue, qualityFromResult, schedule } from "@/lib/srs";
-import { loadSettings, masteryKey, saveSettings } from "@/lib/storage";
+import {
+  loadSettings,
+  loadSubjects,
+  masteryKey,
+  saveSettings,
+  saveSubjects,
+} from "@/lib/storage";
 import {
   DEFAULT_SETTINGS,
   MASTERY_THRESHOLD,
@@ -25,6 +33,7 @@ import {
   type QuizSession,
   type Screen,
   type Settings,
+  type Subject,
   type StudyCompanionExport,
   type Topic,
 } from "@/lib/types";
@@ -57,8 +66,10 @@ export interface TopicStats {
 }
 
 export interface UseQuizState {
+  isLoading: boolean;
   screen: Screen;
   topics: Topic[];
+  subjects: Subject[];
   mastery: MasteryMap;
   settings: Settings;
   session: QuizSession | null;
@@ -73,6 +84,8 @@ export interface UseQuizState {
 
   goHome: () => void;
   openCreate: (subject?: string) => void;
+  openCreateSubject: () => void;
+  createSubject: (name: string) => Subject | null;
   openImport: () => void;
   openSettings: () => void;
   openEdit: (topicId: string) => void;
@@ -128,7 +141,11 @@ export interface UseQuizState {
 }
 
 export function useQuizState(): UseQuizState {
+  const [isLoading, setIsLoading] = React.useState(true);
   const [topics, setTopics] = React.useState<Topic[]>([]);
+  const [subjects, setSubjects] = React.useState<Subject[]>(
+    () => loadSubjects() ?? [],
+  );
   const [mastery, setMastery] = React.useState<MasteryMap>({});
   const [settings, setSettings] = React.useState<Settings>(() =>
     loadSettings(),
@@ -151,14 +168,38 @@ export function useQuizState(): UseQuizState {
   }, [settings]);
 
   React.useEffect(() => {
+    saveSubjects(subjects);
+  }, [subjects]);
+
+  React.useEffect(() => {
     let active = true;
-    void Promise.all([loadRemoteTopics(), loadRemoteMastery()]).then(
-      ([remoteTopics, remoteMastery]) => {
-        if (!active) return;
-        if (remoteTopics?.length) setTopics(remoteTopics);
-        if (remoteMastery) setMastery(remoteMastery);
-      },
-    );
+    void Promise.all([
+      loadRemoteTopics(),
+      loadRemoteMastery(),
+      loadRemoteSubjects(),
+    ]).then(([remoteTopics, remoteMastery, remoteSubjects]) => {
+      if (!active) return;
+      if (remoteTopics?.length) setTopics(remoteTopics);
+      if (remoteMastery) setMastery(remoteMastery);
+      if (remoteSubjects?.length) setSubjects(remoteSubjects);
+      if (!remoteSubjects?.length && remoteTopics?.length) {
+        const now = Date.now();
+        setSubjects(
+          [
+            ...new Set(
+              remoteTopics.map((topic) => topic.subject || topic.name),
+            ),
+          ].map((name, index) => ({
+            id: uid("subject"),
+            name,
+            color: index % ACCENT_COUNT,
+            createdAt: now,
+            updatedAt: now,
+          })),
+        );
+      }
+      setIsLoading(false);
+    });
     return () => {
       active = false;
     };
@@ -240,6 +281,28 @@ export function useQuizState(): UseQuizState {
     setCreatingSubject(subject);
     setScreen("paste");
   }, []);
+
+  const openCreateSubject = React.useCallback(() => {
+    setScreen("subject");
+  }, []);
+
+  const createSubject = React.useCallback<UseQuizState["createSubject"]>(
+    (name) => {
+      const trimmed = name.trim();
+      if (!trimmed) return null;
+      const now = Date.now();
+      const subject: Subject = {
+        id: uid("subject"),
+        name: trimmed,
+        createdAt: now,
+        updatedAt: now,
+      };
+      setSubjects((prev) => [subject, ...prev]);
+      void createRemoteSubject(subject);
+      return subject;
+    },
+    [],
+  );
 
   const openImport = React.useCallback(() => {
     setEditingId(null);
@@ -760,10 +823,11 @@ export function useQuizState(): UseQuizState {
       version: 2,
       exportedAt: Date.now(),
       topics,
+      subjects,
       mastery,
       settings,
     };
-  }, [topics, mastery, settings]);
+  }, [topics, subjects, mastery, settings]);
 
   const importData = React.useCallback(
     (
@@ -778,6 +842,19 @@ export function useQuizState(): UseQuizState {
       const incomingTopics = Array.isArray(data.topics)
         ? (data.topics as Topic[])
         : [];
+      const incomingSubjects = Array.isArray(data.subjects)
+        ? (data.subjects as Subject[])
+        : [
+            ...new Set(
+              incomingTopics.map((topic) => topic.subject || topic.name),
+            ),
+          ].map((name, index) => ({
+            id: uid("subject"),
+            name,
+            color: index % ACCENT_COUNT,
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+          }));
       const incomingMastery =
         data.mastery && typeof data.mastery === "object"
           ? (data.mastery as MasteryMap)
@@ -801,6 +878,7 @@ export function useQuizState(): UseQuizState {
           };
         });
         setTopics((prev) => [...remapped, ...prev]);
+        setSubjects((prev) => [...incomingSubjects, ...prev]);
         // Mastery references old ids; simplest is to drop imported mastery on merge
         // to avoid key collisions. Users who want mastery should use replace.
         setSettings(incomingSettings);
@@ -808,6 +886,7 @@ export function useQuizState(): UseQuizState {
       }
 
       setTopics(incomingTopics);
+      setSubjects(incomingSubjects);
       setMastery(incomingMastery);
       setSettings(incomingSettings);
       return {
@@ -820,6 +899,7 @@ export function useQuizState(): UseQuizState {
 
   const resetAllData = React.useCallback(() => {
     setTopics([]);
+    setSubjects([]);
     setMastery({});
     setSession(null);
     setLastSession(null);
@@ -832,8 +912,10 @@ export function useQuizState(): UseQuizState {
   );
 
   return {
+    isLoading,
     screen,
     topics,
+    subjects,
     mastery,
     settings,
     session,
@@ -847,6 +929,8 @@ export function useQuizState(): UseQuizState {
     setTagFilter,
     goHome,
     openCreate,
+    openCreateSubject,
+    createSubject,
     openImport,
     openSettings,
     openEdit,

@@ -1,6 +1,7 @@
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import * as React from "react";
 import { AppShell } from "@/components/AppShell";
+import { Loader } from "@/components/Loader";
 import { applyTheme } from "@/hooks/useSettings";
 import { useQuizState } from "@/hooks/useQuizState";
 import { HomeScreen } from "@/screens/HomeScreen";
@@ -9,6 +10,7 @@ import { PasteScreen } from "@/screens/PasteScreen";
 import { QuizScreen } from "@/screens/QuizScreen";
 import { ResultsScreen } from "@/screens/ResultsScreen";
 import { SettingsScreen } from "@/screens/SettingsScreen";
+import { SubjectScreen } from "@/screens/SubjectScreen";
 import type { StudyCompanionExport } from "@/lib/types";
 
 export default function App() {
@@ -52,6 +54,7 @@ export default function App() {
     app.screen === "quiz" || app.screen === "results"
       ? "quiz"
       : app.screen === "paste" ||
+          app.screen === "subject" ||
           app.screen === "import" ||
           app.screen === "settings"
         ? "form"
@@ -146,30 +149,36 @@ export default function App() {
             exit={variants.exit}
             transition={transition}
           >
-            {app.screen === "home" && (
-              <HomeScreen
-                topics={app.topics}
-                getTopicStats={app.getTopicStats}
-                onCreate={app.openCreate}
-                onImport={app.openImport}
-                onSettings={app.openSettings}
-                onEdit={app.openEdit}
-                onDelete={app.deleteTopic}
-                onStart={(id) => app.startQuiz(id)}
-                onCram={app.startCram}
-                onReview={app.startReview}
-                onBookmarked={app.startBookmarked}
-                onTest={startTest}
-                searchQuery={app.searchQuery}
-                setSearchQuery={app.setSearchQuery}
-                tagFilter={app.tagFilter}
-                setTagFilter={app.setTagFilter}
-                allTags={app.getAllTags()}
-                settings={app.settings}
-                onChangeTheme={changeTheme}
-                onExport={handleExport}
-                onImportFile={handleImportFileClick}
-              />
+            {app.isLoading ? (
+              <Loader />
+            ) : (
+              app.screen === "home" && (
+                <HomeScreen
+                  topics={app.topics}
+                  subjects={app.subjects}
+                  getTopicStats={app.getTopicStats}
+                  onCreate={app.openCreate}
+                  onCreateSubject={app.openCreateSubject}
+                  onImport={app.openImport}
+                  onSettings={app.openSettings}
+                  onEdit={app.openEdit}
+                  onDelete={app.deleteTopic}
+                  onStart={(id) => app.startQuiz(id)}
+                  onCram={app.startCram}
+                  onReview={app.startReview}
+                  onBookmarked={app.startBookmarked}
+                  onTest={startTest}
+                  searchQuery={app.searchQuery}
+                  setSearchQuery={app.setSearchQuery}
+                  tagFilter={app.tagFilter}
+                  setTagFilter={app.setTagFilter}
+                  allTags={app.getAllTags()}
+                  settings={app.settings}
+                  onChangeTheme={changeTheme}
+                  onExport={handleExport}
+                  onImportFile={handleImportFileClick}
+                />
+              )
             )}
 
             {app.screen === "paste" && (
@@ -181,6 +190,15 @@ export default function App() {
                 onSave={(input) => {
                   const topic = app.saveTopic(input);
                   if (topic) app.startQuizForTopic(topic);
+                }}
+              />
+            )}
+
+            {app.screen === "subject" && (
+              <SubjectScreen
+                onBack={app.goHome}
+                onCreate={(name) => {
+                  if (app.createSubject(name)) app.goHome();
                 }}
               />
             )}

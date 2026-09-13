@@ -1,4 +1,4 @@
-import type { MasteryMap, MasteryRecord, Topic } from "./types";
+import type { MasteryMap, MasteryRecord, Subject, Topic } from "./types";
 
 const apiBaseUrl = (
   import.meta.env.VITE_API_BASE_URL as string | undefined
@@ -43,6 +43,17 @@ export function updateRemoteTopic(topic: Topic): Promise<Topic | null> {
 export function deleteRemoteTopic(topicId: string): Promise<null> {
   return request<null>(`/topics/${encodeURIComponent(topicId)}`, {
     method: "DELETE",
+  });
+}
+
+export function loadRemoteSubjects(): Promise<Subject[] | null> {
+  return request<Subject[]>("/subjects");
+}
+
+export function createRemoteSubject(subject: Subject): Promise<Subject | null> {
+  return request<Subject>("/subjects", {
+    method: "POST",
+    body: JSON.stringify(subject),
   });
 }
 
