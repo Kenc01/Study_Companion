@@ -66,6 +66,7 @@ export function PasteScreen({
   onSave,
 }: PasteScreenProps) {
   const isEdit = editingTopic !== null;
+  const subjectIsFixed = !isEdit && Boolean(initialSubject.trim());
   const [name, setName] = React.useState(editingTopic?.name ?? "");
   const [subject, setSubject] = React.useState(
     editingTopic?.subject ?? editingTopic?.name ?? initialSubject,
@@ -139,7 +140,11 @@ export function PasteScreen({
         </span>
         <div>
           <h1 className="text-[22px] leading-tight font-semibold sm:text-[26px]">
-            {isEdit ? "Edit Quiz Topic" : "Create a Quiz Topic"}
+            {isEdit
+              ? "Edit Quiz"
+              : subjectIsFixed
+                ? "Create a Quiz"
+                : "Create a Quiz Topic"}
           </h1>
           <p className="mt-1 max-w-xl text-[15px] leading-relaxed text-ink-soft">
             Paste your fill-in-the-blank notes below. Every question and its{" "}
@@ -153,32 +158,34 @@ export function PasteScreen({
 
       <div className="mt-7 grid gap-5 lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-6">
         <div className="rounded-[var(--radius)] border border-line bg-card p-5 shadow-[var(--shadow-soft)] sm:p-6">
-          <div>
-            <label
-              htmlFor="topic-subject"
-              className="block text-sm font-medium"
-            >
-              Subject
-            </label>
-            <Input
-              id="topic-subject"
-              ref={nameRef}
-              value={subject}
-              onChange={(e) => setSubject(e.target.value)}
-              placeholder="e.g. Research"
-              maxLength={90}
-              invalid={touched && Boolean(subjectError)}
-              aria-describedby={
-                touched && subjectError ? "topic-subject-error" : undefined
-              }
-              className="mt-2"
-            />
-            <AnimatePresence>
-              {touched && subjectError && (
-                <FieldError id="topic-subject-error" message={subjectError} />
-              )}
-            </AnimatePresence>
-          </div>
+          {!subjectIsFixed && (
+            <div>
+              <label
+                htmlFor="topic-subject"
+                className="block text-sm font-medium"
+              >
+                Subject
+              </label>
+              <Input
+                id="topic-subject"
+                ref={nameRef}
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
+                placeholder="e.g. Research"
+                maxLength={90}
+                invalid={touched && Boolean(subjectError)}
+                aria-describedby={
+                  touched && subjectError ? "topic-subject-error" : undefined
+                }
+                className="mt-2"
+              />
+              <AnimatePresence>
+                {touched && subjectError && (
+                  <FieldError id="topic-subject-error" message={subjectError} />
+                )}
+              </AnimatePresence>
+            </div>
+          )}
 
           <div className="mt-5">
             <label htmlFor="topic-name" className="block text-sm font-medium">
@@ -186,6 +193,7 @@ export function PasteScreen({
             </label>
             <Input
               id="topic-name"
+              ref={subjectIsFixed ? nameRef : undefined}
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Chapter 1"
