@@ -312,7 +312,8 @@ export function HomeScreen({
               variant="secondary"
               onClick={() => onCreate(selectedSubject ?? undefined)}
             >
-              <Plus aria-hidden="true" /> New Quiz
+              <Plus aria-hidden="true" />
+              {selectedSubject ? "New Quiz" : "New Subject"}
             </Button>
           </div>
         </div>

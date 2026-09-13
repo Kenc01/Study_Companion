@@ -40,7 +40,7 @@ export function EmptyTopicsState({
           onClick={onCreate}
         >
           <Plus aria-hidden="true" />
-          Create First Quiz
+          Create First Subject
         </Button>
       </div>
     </motion.section>
