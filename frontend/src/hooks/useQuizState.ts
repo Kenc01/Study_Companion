@@ -63,6 +63,7 @@ export interface UseQuizState {
   settings: Settings;
   session: QuizSession | null;
   editingTopic: Topic | null;
+  creatingSubject: string;
   lastSession: QuizSession | null;
   sessionElapsedMs: number;
   searchQuery: string;
@@ -71,12 +72,13 @@ export interface UseQuizState {
   setTagFilter: (t: string | null) => void;
 
   goHome: () => void;
-  openCreate: () => void;
+  openCreate: (subject?: string) => void;
   openImport: () => void;
   openSettings: () => void;
   openEdit: (topicId: string) => void;
   saveTopic: (input: {
     name: string;
+    subject?: string;
     rawNotes: string;
     questions: Question[];
     tags?: string[];
@@ -137,6 +139,7 @@ export function useQuizState(): UseQuizState {
     null,
   );
   const [editingId, setEditingId] = React.useState<string | null>(null);
+  const [creatingSubject, setCreatingSubject] = React.useState("");
   const [searchQuery, setSearchQuery] = React.useState("");
   const [tagFilter, setTagFilter] = React.useState<string | null>(null);
   const questionStartTimeRef = React.useRef<number>(Date.now());
@@ -232,8 +235,9 @@ export function useQuizState(): UseQuizState {
     setTagFilter(null);
   }, []);
 
-  const openCreate = React.useCallback(() => {
+  const openCreate = React.useCallback((subject = "") => {
     setEditingId(null);
+    setCreatingSubject(subject);
     setScreen("paste");
   }, []);
 
@@ -253,7 +257,7 @@ export function useQuizState(): UseQuizState {
 
   /* ---------------------------- topic CRUD ----------------------------- */
   const saveTopic = React.useCallback<UseQuizState["saveTopic"]>(
-    ({ name, rawNotes, questions, tags, color }) => {
+    ({ name, subject, rawNotes, questions, tags, color }) => {
       if (!questions.length) return null;
       const now = Date.now();
 
@@ -271,6 +275,7 @@ export function useQuizState(): UseQuizState {
           const updated: Topic = {
             ...existing,
             name: name.trim(),
+            subject: subject?.trim() || existing.subject || name.trim(),
             tags: tags ?? existing.tags ?? [],
             color: color ?? existing.color ?? 0,
             rawNotes,
@@ -282,6 +287,7 @@ export function useQuizState(): UseQuizState {
           );
           void updateRemoteTopic(updated);
           setEditingId(null);
+          setCreatingSubject("");
           return updated;
         }
       }
@@ -289,6 +295,7 @@ export function useQuizState(): UseQuizState {
       const created: Topic = {
         id: uid("topic"),
         name: name.trim(),
+        subject: subject?.trim() || name.trim(),
         tags: tags ?? [],
         color: color ?? Math.floor(Math.random() * ACCENT_COUNT),
         rawNotes,
@@ -299,6 +306,7 @@ export function useQuizState(): UseQuizState {
       setTopics((prev) => [created, ...prev]);
       void createRemoteTopic(created);
       setEditingId(null);
+      setCreatingSubject("");
       return created;
     },
     [editingId, topics],
@@ -830,6 +838,7 @@ export function useQuizState(): UseQuizState {
     settings,
     session,
     editingTopic,
+    creatingSubject,
     lastSession,
     sessionElapsedMs,
     searchQuery,

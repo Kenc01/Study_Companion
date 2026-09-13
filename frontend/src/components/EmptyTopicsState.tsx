@@ -1,13 +1,16 @@
-import { motion } from 'framer-motion'
-import { FileUp, Library, Plus } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { motion } from "framer-motion";
+import { FileUp, Library, Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface EmptyTopicsStateProps {
-  onCreate: () => void
-  onImport: () => void
+  onCreate: () => void;
+  onImport: () => void;
 }
 
-export function EmptyTopicsState({ onCreate, onImport }: EmptyTopicsStateProps) {
+export function EmptyTopicsState({
+  onCreate,
+  onImport,
+}: EmptyTopicsStateProps) {
   return (
     <motion.section
       initial={{ opacity: 0, y: 12 }}
@@ -18,21 +21,28 @@ export function EmptyTopicsState({ onCreate, onImport }: EmptyTopicsStateProps) 
       <span className="grid size-16 place-items-center rounded-[var(--radius)] bg-primary-soft text-primary">
         <Library className="size-8" aria-hidden="true" />
       </span>
-      <h2 className="mt-5 text-xl font-semibold sm:text-[22px]">No quiz topics yet</h2>
+      <h2 className="mt-5 text-xl font-semibold sm:text-[22px]">
+        No subjects yet
+      </h2>
       <p className="mt-2.5 max-w-sm text-[15px] leading-relaxed text-ink-soft">
-        Upload a reviewer, or paste your fill-in-the-blank notes. Each topic becomes its own quiz
-        deck.
+        Create a subject, then add chapter quizzes inside it. You can also
+        upload a reviewer to start your first quiz.
       </p>
       <div className="mt-7 flex w-full flex-col gap-2.5 sm:w-auto sm:flex-row">
         <Button size="lg" className="px-6" onClick={onImport}>
           <FileUp aria-hidden="true" />
           Import a File
         </Button>
-        <Button size="lg" variant="secondary" className="px-6" onClick={onCreate}>
+        <Button
+          size="lg"
+          variant="secondary"
+          className="px-6"
+          onClick={onCreate}
+        >
           <Plus aria-hidden="true" />
-          Create First Topic
+          Create First Quiz
         </Button>
       </div>
     </motion.section>
-  )
+  );
 }

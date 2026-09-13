@@ -1,14 +1,14 @@
-import { AnimatePresence, motion } from 'framer-motion'
-import { ArrowLeft, BookOpen, CircleAlert, Play, Sparkles } from 'lucide-react'
-import * as React from 'react'
-import { NotesFormatExample } from '@/components/NotesFormatExample'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import { parseNotes } from '@/lib/parseNotes'
-import type { Question, Topic } from '@/lib/types'
-import { plural } from '@/lib/utils'
+import { AnimatePresence, motion } from "framer-motion";
+import { ArrowLeft, BookOpen, CircleAlert, Play, Sparkles } from "lucide-react";
+import * as React from "react";
+import { NotesFormatExample } from "@/components/NotesFormatExample";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { parseNotes } from "@/lib/parseNotes";
+import type { Question, Topic } from "@/lib/types";
+import { plural } from "@/lib/utils";
 
 const EXAMPLE_NOTES = `1. _____ is essential for safeguarding data, systems, and networks against unauthorized access.
 ans: Information Assurance and Security
@@ -17,18 +17,20 @@ ans: Information Assurance and Security
 ans: Encryption
 
 3. A _____ monitors network traffic and blocks packets that violate a rule set.
-ans: firewall`
+ans: firewall`;
 
 interface PasteScreenProps {
-  editingTopic: Topic | null
-  onBack: () => void
+  editingTopic: Topic | null;
+  initialSubject?: string;
+  onBack: () => void;
   onSave: (input: {
-    name: string
-    rawNotes: string
-    questions: Question[]
-    tags?: string[]
-    color?: number
-  }) => void
+    name: string;
+    subject: string;
+    rawNotes: string;
+    questions: Question[];
+    tags?: string[];
+    color?: number;
+  }) => void;
 }
 
 function FieldError({ id, message }: { id: string; message: string }) {
@@ -45,60 +47,87 @@ function FieldError({ id, message }: { id: string; message: string }) {
       <CircleAlert className="mt-px size-4 shrink-0" aria-hidden="true" />
       <span>{message}</span>
     </motion.p>
-  )
+  );
 }
 
 const ACCENT_CHOICES = [
-  { label: 'Sky', className: 'bg-sky-500' },
-  { label: 'Emerald', className: 'bg-emerald-500' },
-  { label: 'Amber', className: 'bg-amber-500' },
-  { label: 'Rose', className: 'bg-rose-500' },
-  { label: 'Violet', className: 'bg-violet-500' },
-  { label: 'Teal', className: 'bg-teal-500' },
-]
+  { label: "Sky", className: "bg-sky-500" },
+  { label: "Emerald", className: "bg-emerald-500" },
+  { label: "Amber", className: "bg-amber-500" },
+  { label: "Rose", className: "bg-rose-500" },
+  { label: "Violet", className: "bg-violet-500" },
+  { label: "Teal", className: "bg-teal-500" },
+];
 
-export function PasteScreen({ editingTopic, onBack, onSave }: PasteScreenProps) {
-  const isEdit = editingTopic !== null
-  const [name, setName] = React.useState(editingTopic?.name ?? '')
-  const [notes, setNotes] = React.useState(editingTopic?.rawNotes ?? '')
-  const [tagInput, setTagInput] = React.useState((editingTopic?.tags ?? []).join(', '))
-  const [color, setColor] = React.useState<number>(editingTopic?.color ?? 0)
-  const [touched, setTouched] = React.useState(false)
-  const nameRef = React.useRef<HTMLInputElement>(null)
+export function PasteScreen({
+  editingTopic,
+  initialSubject = "",
+  onBack,
+  onSave,
+}: PasteScreenProps) {
+  const isEdit = editingTopic !== null;
+  const [name, setName] = React.useState(editingTopic?.name ?? "");
+  const [subject, setSubject] = React.useState(
+    editingTopic?.subject ?? editingTopic?.name ?? initialSubject,
+  );
+  const [notes, setNotes] = React.useState(editingTopic?.rawNotes ?? "");
+  const [tagInput, setTagInput] = React.useState(
+    (editingTopic?.tags ?? []).join(", "),
+  );
+  const [color, setColor] = React.useState<number>(editingTopic?.color ?? 0);
+  const [touched, setTouched] = React.useState(false);
+  const nameRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
-    nameRef.current?.focus()
-  }, [])
+    nameRef.current?.focus();
+  }, []);
 
-  const parsed = React.useMemo(() => parseNotes(notes), [notes])
+  const parsed = React.useMemo(() => parseNotes(notes), [notes]);
 
-  const nameError = !name.trim() ? 'Give this topic a name so you can find it later.' : null
+  const nameError = !name.trim()
+    ? "Give this topic a name so you can find it later."
+    : null;
+  const subjectError = !subject.trim()
+    ? "Choose a subject for this quiz."
+    : null;
   const notesError = !notes.trim()
-    ? 'Paste your notes to build the quiz deck.'
+    ? "Paste your notes to build the quiz deck."
     : parsed.questions.length === 0
-      ? 'No valid questions found. Each question needs an “ans:” line directly beneath it.'
-      : null
+      ? "No valid questions found. Each question needs an “ans:” line directly beneath it."
+      : null;
 
-  const invalid = Boolean(nameError || notesError)
+  const invalid = Boolean(nameError || subjectError || notesError);
 
   const handleSubmit = (event: React.FormEvent) => {
-    event.preventDefault()
-    setTouched(true)
-    if (invalid) return
+    event.preventDefault();
+    setTouched(true);
+    if (invalid) return;
     const tags = tagInput
-      .split(',')
+      .split(",")
       .map((t) => t.trim())
-      .filter(Boolean)
-    onSave({ name: name.trim(), rawNotes: notes, questions: parsed.questions, tags, color })
-  }
+      .filter(Boolean);
+    onSave({
+      name: name.trim(),
+      subject: subject.trim(),
+      rawNotes: notes,
+      questions: parsed.questions,
+      tags,
+      color,
+    });
+  };
 
-  const showNameError = touched && Boolean(nameError)
-  const showNotesError = touched && Boolean(notesError)
+  const showNameError = touched && Boolean(nameError);
+  const showNotesError = touched && Boolean(notesError);
 
   return (
     <form onSubmit={handleSubmit} noValidate>
       <div className="flex items-center gap-3">
-        <Button variant="secondary" size="icon" onClick={onBack} aria-label="Back to topics">
+        <Button
+          variant="secondary"
+          size="icon"
+          onClick={onBack}
+          aria-label="Back to topics"
+        >
           <ArrowLeft aria-hidden="true" />
         </Button>
         <span className="text-sm text-ink-faint">Topics</span>
@@ -110,11 +139,13 @@ export function PasteScreen({ editingTopic, onBack, onSave }: PasteScreenProps) 
         </span>
         <div>
           <h1 className="text-[22px] leading-tight font-semibold sm:text-[26px]">
-            {isEdit ? 'Edit Quiz Topic' : 'Create a Quiz Topic'}
+            {isEdit ? "Edit Quiz Topic" : "Create a Quiz Topic"}
           </h1>
           <p className="mt-1 max-w-xl text-[15px] leading-relaxed text-ink-soft">
-            Paste your fill-in-the-blank notes below. Every question and its{' '}
-            <code className="rounded bg-page-deep px-1 py-0.5 font-mono text-[13px]">ans:</code>{' '}
+            Paste your fill-in-the-blank notes below. Every question and its{" "}
+            <code className="rounded bg-page-deep px-1 py-0.5 font-mono text-[13px]">
+              ans:
+            </code>{" "}
             line becomes a card in this deck.
           </p>
         </div>
@@ -123,18 +154,44 @@ export function PasteScreen({ editingTopic, onBack, onSave }: PasteScreenProps) 
       <div className="mt-7 grid gap-5 lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-6">
         <div className="rounded-[var(--radius)] border border-line bg-card p-5 shadow-[var(--shadow-soft)] sm:p-6">
           <div>
+            <label
+              htmlFor="topic-subject"
+              className="block text-sm font-medium"
+            >
+              Subject
+            </label>
+            <Input
+              id="topic-subject"
+              ref={nameRef}
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              placeholder="e.g. Research"
+              maxLength={90}
+              invalid={touched && Boolean(subjectError)}
+              aria-describedby={
+                touched && subjectError ? "topic-subject-error" : undefined
+              }
+              className="mt-2"
+            />
+            <AnimatePresence>
+              {touched && subjectError && (
+                <FieldError id="topic-subject-error" message={subjectError} />
+              )}
+            </AnimatePresence>
+          </div>
+
+          <div className="mt-5">
             <label htmlFor="topic-name" className="block text-sm font-medium">
-              Topic name
+              Quiz name
             </label>
             <Input
               id="topic-name"
-              ref={nameRef}
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Information Assurance & Security"
+              placeholder="e.g. Chapter 1"
               maxLength={90}
               invalid={showNameError}
-              aria-describedby={showNameError ? 'topic-name-error' : undefined}
+              aria-describedby={showNameError ? "topic-name-error" : undefined}
               className="mt-2"
             />
             <AnimatePresence>
@@ -147,7 +204,10 @@ export function PasteScreen({ editingTopic, onBack, onSave }: PasteScreenProps) 
           <div className="mt-5 grid gap-5 sm:grid-cols-2">
             <div>
               <label htmlFor="topic-tags" className="block text-sm font-medium">
-                Tags <span className="font-normal text-ink-faint">(comma-separated, optional)</span>
+                Tags{" "}
+                <span className="font-normal text-ink-faint">
+                  (comma-separated, optional)
+                </span>
               </label>
               <Input
                 id="topic-tags"
@@ -167,7 +227,9 @@ export function PasteScreen({ editingTopic, onBack, onSave }: PasteScreenProps) 
                     aria-label={c.label}
                     onClick={() => setColor(i)}
                     className={`size-7 rounded-full ${c.className} ring-offset-2 transition-transform ${
-                      color === i ? 'ring-2 ring-primary scale-110' : 'hover:scale-105'
+                      color === i
+                        ? "ring-2 ring-primary scale-110"
+                        : "hover:scale-105"
                     }`}
                   />
                 ))}
@@ -177,17 +239,22 @@ export function PasteScreen({ editingTopic, onBack, onSave }: PasteScreenProps) 
 
           <div className="mt-5">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <label htmlFor="topic-notes" className="block text-sm font-medium">
+              <label
+                htmlFor="topic-notes"
+                className="block text-sm font-medium"
+              >
                 Your notes
               </label>
               <div className="flex items-center gap-2">
                 {parsed.skipped > 0 && (
                   <Badge variant="neutral">{parsed.skipped} skipped</Badge>
                 )}
-                <Badge variant={parsed.questions.length ? 'success' : 'neutral'}>
+                <Badge
+                  variant={parsed.questions.length ? "success" : "neutral"}
+                >
                   {parsed.questions.length
-                    ? `${plural(parsed.questions.length, 'question')} detected`
-                    : 'No questions yet'}
+                    ? `${plural(parsed.questions.length, "question")} detected`
+                    : "No questions yet"}
                 </Badge>
               </div>
             </div>
@@ -195,25 +262,40 @@ export function PasteScreen({ editingTopic, onBack, onSave }: PasteScreenProps) 
               id="topic-notes"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder={'1. _____ is essential for safeguarding data...\nans: Information Assurance and Security'}
+              placeholder={
+                "1. _____ is essential for safeguarding data...\nans: Information Assurance and Security"
+              }
               spellCheck={false}
               invalid={showNotesError}
-              aria-describedby={showNotesError ? 'topic-notes-error' : 'topic-notes-hint'}
+              aria-describedby={
+                showNotesError ? "topic-notes-error" : "topic-notes-hint"
+              }
               className="mt-2 min-h-[260px] font-mono text-[13.5px] sm:min-h-[320px]"
             />
             <AnimatePresence>
               {showNotesError && notesError ? (
                 <FieldError id="topic-notes-error" message={notesError} />
               ) : (
-                <p id="topic-notes-hint" className="mt-2 text-[13px] text-ink-faint">
-                  {notes.length.toLocaleString()} characters · questions are detected as you type.
+                <p
+                  id="topic-notes-hint"
+                  className="mt-2 text-[13px] text-ink-faint"
+                >
+                  {notes.length.toLocaleString()} characters · questions are
+                  detected as you type.
                 </p>
               )}
             </AnimatePresence>
           </div>
 
           <div className="mt-6 flex flex-col-reverse gap-2.5 sm:flex-row sm:justify-end">
-            <Button type="button" variant="secondary" size="lg" onClick={onBack} block className="sm:w-auto">
+            <Button
+              type="button"
+              variant="secondary"
+              size="lg"
+              onClick={onBack}
+              block
+              className="sm:w-auto"
+            >
               Cancel
             </Button>
             <Button
@@ -224,7 +306,7 @@ export function PasteScreen({ editingTopic, onBack, onSave }: PasteScreenProps) 
               disabled={touched && invalid}
             >
               <Play aria-hidden="true" />
-              {isEdit ? 'Save & Start Quiz' : 'Save & Start Quiz'}
+              {isEdit ? "Save & Start Quiz" : "Save & Start Quiz"}
             </Button>
           </div>
         </div>
@@ -232,10 +314,15 @@ export function PasteScreen({ editingTopic, onBack, onSave }: PasteScreenProps) 
         <div className="space-y-4">
           <NotesFormatExample
             onUseExample={
-              notes.trim() ? undefined : () => {
-                setNotes(EXAMPLE_NOTES)
-                if (!name.trim()) setName('Information Assurance & Security')
-              }
+              notes.trim()
+                ? undefined
+                : () => {
+                    setNotes(EXAMPLE_NOTES);
+                    if (!name.trim())
+                      setName("Information Assurance & Security");
+                    if (!subject.trim())
+                      setSubject("Information Assurance & Security");
+                  }
             }
           />
           {parsed.questions.length > 0 && (
@@ -245,11 +332,18 @@ export function PasteScreen({ editingTopic, onBack, onSave }: PasteScreenProps) 
               className="rounded-[var(--radius)] border border-success-border bg-success-soft p-4"
             >
               <p className="flex items-start gap-2 text-[13px] leading-relaxed text-success">
-                <Sparkles className="mt-px size-4 shrink-0" aria-hidden="true" />
+                <Sparkles
+                  className="mt-px size-4 shrink-0"
+                  aria-hidden="true"
+                />
                 <span>
-                  Ready to study — <strong className="font-semibold">{parsed.questions.length}</strong>{' '}
-                  {parsed.questions.length === 1 ? 'card' : 'cards'} will be created
-                  {isEdit ? ' and mastery progress will be kept.' : '.'}
+                  Ready to study —{" "}
+                  <strong className="font-semibold">
+                    {parsed.questions.length}
+                  </strong>{" "}
+                  {parsed.questions.length === 1 ? "card" : "cards"} will be
+                  created
+                  {isEdit ? " and mastery progress will be kept." : "."}
                 </span>
               </p>
             </motion.div>
@@ -257,5 +351,5 @@ export function PasteScreen({ editingTopic, onBack, onSave }: PasteScreenProps) 
         </div>
       </div>
     </form>
-  )
+  );
 }

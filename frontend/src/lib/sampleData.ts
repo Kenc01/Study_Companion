@@ -1,15 +1,17 @@
-import { parseNotes } from './parseNotes'
-import type { Topic } from './types'
-import { uid } from './utils'
+import { parseNotes } from "./parseNotes";
+import type { Topic } from "./types";
+import { uid } from "./utils";
 
 interface Seed {
-  name: string
-  notes: string
+  subject: string;
+  name: string;
+  notes: string;
 }
 
 const SEEDS: Seed[] = [
   {
-    name: 'Information Assurance & Security',
+    subject: "Information Assurance & Security",
+    name: "Information Assurance & Security",
     notes: `1. _____ is essential for safeguarding data, systems, and networks against unauthorized access.
 ans: Information Assurance and Security / IAS
 
@@ -41,7 +43,8 @@ ans: vulnerability
 ans: Non-repudiation`,
   },
   {
-    name: 'Cell Biology Basics',
+    subject: "Biology",
+    name: "Cell Biology Basics",
     notes: `1. _____ is the powerhouse organelle where cellular respiration produces ATP.
 ans: The mitochondrion / mitochondria
 
@@ -66,21 +69,22 @@ ans: cytoplasm
 8. _____ is the movement of water across a semi-permeable membrane.
 ans: Osmosis`,
   },
-]
+];
 
 export function buildSampleTopics(): Topic[] {
-  const now = Date.now()
+  const now = Date.now();
   return SEEDS.map((seed, i) => {
-    const { questions } = parseNotes(seed.notes)
+    const { questions } = parseNotes(seed.notes);
     return {
-      id: uid('topic'),
+      id: uid("topic"),
       name: seed.name,
-      tags: i === 0 ? ['Security', 'Sample'] : ['Biology', 'Sample'],
+      subject: seed.subject,
+      tags: i === 0 ? ["Security", "Sample"] : ["Biology", "Sample"],
       color: i % 6,
       rawNotes: seed.notes,
       questions,
       createdAt: now - i * 86_400_000,
       updatedAt: now - i * 86_400_000,
-    }
-  })
+    };
+  });
 }

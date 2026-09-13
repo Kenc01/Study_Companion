@@ -1,25 +1,25 @@
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
-import * as React from 'react'
-import { AppShell } from '@/components/AppShell'
-import { applyTheme } from '@/hooks/useSettings'
-import { useQuizState } from '@/hooks/useQuizState'
-import { HomeScreen } from '@/screens/HomeScreen'
-import { ImportScreen } from '@/screens/ImportScreen'
-import { PasteScreen } from '@/screens/PasteScreen'
-import { QuizScreen } from '@/screens/QuizScreen'
-import { ResultsScreen } from '@/screens/ResultsScreen'
-import { SettingsScreen } from '@/screens/SettingsScreen'
-import type { StudyCompanionExport } from '@/lib/types'
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import * as React from "react";
+import { AppShell } from "@/components/AppShell";
+import { applyTheme } from "@/hooks/useSettings";
+import { useQuizState } from "@/hooks/useQuizState";
+import { HomeScreen } from "@/screens/HomeScreen";
+import { ImportScreen } from "@/screens/ImportScreen";
+import { PasteScreen } from "@/screens/PasteScreen";
+import { QuizScreen } from "@/screens/QuizScreen";
+import { ResultsScreen } from "@/screens/ResultsScreen";
+import { SettingsScreen } from "@/screens/SettingsScreen";
+import type { StudyCompanionExport } from "@/lib/types";
 
 export default function App() {
-  const app = useQuizState()
-  const reduce = useReducedMotion()
-  const backupFileRef = React.useRef<HTMLInputElement>(null)
+  const app = useQuizState();
+  const reduce = useReducedMotion();
+  const backupFileRef = React.useRef<HTMLInputElement>(null);
 
   // Apply theme on first mount.
   React.useEffect(() => {
-    applyTheme(app.settings.theme)
-  }, [app.settings.theme])
+    applyTheme(app.settings.theme);
+  }, [app.settings.theme]);
 
   // Example: Fetch status from our new backend API
   React.useEffect(() => {
@@ -34,7 +34,7 @@ export default function App() {
 
   const transition = reduce
     ? { duration: 0.001 }
-    : { duration: 0.28, ease: [0.22, 1, 0.36, 1] as const }
+    : { duration: 0.28, ease: [0.22, 1, 0.36, 1] as const };
 
   const variants = reduce
     ? { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } }
@@ -42,74 +42,79 @@ export default function App() {
         initial: { opacity: 0, y: 14 },
         animate: { opacity: 1, y: 0 },
         exit: { opacity: 0, y: -10 },
-      }
+      };
 
   React.useEffect(() => {
-    window.scrollTo({ top: 0, behavior: reduce ? 'auto' : 'smooth' })
-  }, [app.screen, reduce])
+    window.scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" });
+  }, [app.screen, reduce]);
 
   const width =
-    app.screen === 'quiz' || app.screen === 'results'
-      ? 'quiz'
-      : app.screen === 'paste' || app.screen === 'import' || app.screen === 'settings'
-        ? 'form'
-        : 'home'
+    app.screen === "quiz" || app.screen === "results"
+      ? "quiz"
+      : app.screen === "paste" ||
+          app.screen === "import" ||
+          app.screen === "settings"
+        ? "form"
+        : "home";
 
   const lastTopic = app.lastSession
-    ? app.topics.find((t) => t.id === app.lastSession?.topicId) ?? null
-    : null
+    ? (app.topics.find((t) => t.id === app.lastSession?.topicId) ?? null)
+    : null;
 
   /* ---------------- Export / Import ---------------- */
   const handleExport = () => {
-    const data = app.exportData()
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    const stamp = new Date().toISOString().slice(0, 10)
-    a.download = `study-companion-backup-${stamp}.json`
-    document.body.appendChild(a)
-    a.click()
-    a.remove()
-    URL.revokeObjectURL(url)
-  }
+    const data = app.exportData();
+    const blob = new Blob([JSON.stringify(data, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    const stamp = new Date().toISOString().slice(0, 10);
+    a.download = `study-companion-backup-${stamp}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
 
-  const handleImportFileClick = () => backupFileRef.current?.click()
+  const handleImportFileClick = () => backupFileRef.current?.click();
 
   const handleImportFile = (file: File) => {
-    const reader = new FileReader()
+    const reader = new FileReader();
     reader.onload = () => {
       try {
-        const data = JSON.parse(String(reader.result)) as StudyCompanionExport
-        const result = app.importData(data, false) // replace
+        const data = JSON.parse(String(reader.result)) as StudyCompanionExport;
+        const result = app.importData(data, false); // replace
         if (!result.ok) {
-          alert(result.message)
+          alert(result.message);
         }
       } catch {
-        alert('That file does not look like a Study Companion backup.')
+        alert("That file does not look like a Study Companion backup.");
       }
-    }
-    reader.readAsText(file)
-  }
+    };
+    reader.readAsText(file);
+  };
 
   /* ---------------- Bookmark / Theme --------------- */
   const toggleBookmarkInSession = React.useCallback(
     (questionId: string, bookmarked: boolean) => {
-      if (!app.session) return
-      app.updateQuestionBookmark(app.session.topicId, questionId, bookmarked)
+      if (!app.session) return;
+      app.updateQuestionBookmark(app.session.topicId, questionId, bookmarked);
     },
     [app.session, app.updateQuestionBookmark],
-  )
+  );
 
   const changeTheme = React.useCallback(
-    (t: 'light' | 'dark' | 'system') => app.setSettings((s) => ({ ...s, theme: t })),
+    (t: "light" | "dark" | "system") =>
+      app.setSettings((s) => ({ ...s, theme: t })),
     [app.setSettings],
-  )
+  );
 
   const startTest = React.useCallback(
-    (topicId: string) => app.startQuiz(topicId, 'test'),
+    (topicId: string) => app.startQuiz(topicId, "test"),
     [app.startQuiz],
-  )
+  );
 
   return (
     <AppShell width={width}>
@@ -126,9 +131,9 @@ export default function App() {
         accept="application/json,.json"
         className="hidden"
         onChange={(e) => {
-          const f = e.target.files?.[0]
-          if (f) handleImportFile(f)
-          e.target.value = ''
+          const f = e.target.files?.[0];
+          if (f) handleImportFile(f);
+          e.target.value = "";
         }}
       />
 
@@ -141,7 +146,7 @@ export default function App() {
             exit={variants.exit}
             transition={transition}
           >
-            {app.screen === 'home' && (
+            {app.screen === "home" && (
               <HomeScreen
                 topics={app.topics}
                 getTopicStats={app.getTopicStats}
@@ -167,29 +172,31 @@ export default function App() {
               />
             )}
 
-            {app.screen === 'paste' && (
+            {app.screen === "paste" && (
               <PasteScreen
-                key={app.editingTopic?.id ?? 'new'}
+                key={app.editingTopic?.id ?? "new"}
                 editingTopic={app.editingTopic}
+                initialSubject={app.creatingSubject}
                 onBack={app.goHome}
                 onSave={(input) => {
-                  const topic = app.saveTopic(input)
-                  if (topic) app.startQuizForTopic(topic)
+                  const topic = app.saveTopic(input);
+                  if (topic) app.startQuizForTopic(topic);
                 }}
               />
             )}
 
-            {app.screen === 'import' && (
+            {app.screen === "import" && (
               <ImportScreen
                 onBack={app.goHome}
                 onSave={({ name, rawNotes, questions, startCram }) => {
-                  const topic = app.saveTopic({ name, rawNotes, questions })
-                  if (topic) app.startQuizForTopic(topic, startCram ? 'cram' : 'all')
+                  const topic = app.saveTopic({ name, rawNotes, questions });
+                  if (topic)
+                    app.startQuizForTopic(topic, startCram ? "cram" : "all");
                 }}
               />
             )}
 
-            {app.screen === 'quiz' && app.session && (
+            {app.screen === "quiz" && app.session && (
               <QuizScreen
                 session={app.session}
                 getRecord={app.getRecord}
@@ -203,7 +210,7 @@ export default function App() {
               />
             )}
 
-            {app.screen === 'results' && app.lastSession && (
+            {app.screen === "results" && app.lastSession && (
               <ResultsScreen
                 session={app.lastSession}
                 topic={lastTopic}
@@ -211,35 +218,49 @@ export default function App() {
                 onRetryWrong={app.retryWrong}
                 onRetryAll={app.retryAll}
                 onNewNotes={app.openImport}
-                onCram={() => app.lastSession && app.startCram(app.lastSession.topicId)}
-                onReview={() => app.lastSession && app.startReview(app.lastSession.topicId)}
-                onTest={() => app.lastSession && startTest(app.lastSession.topicId)}
+                onCram={() =>
+                  app.lastSession && app.startCram(app.lastSession.topicId)
+                }
+                onReview={() =>
+                  app.lastSession && app.startReview(app.lastSession.topicId)
+                }
+                onTest={() =>
+                  app.lastSession && startTest(app.lastSession.topicId)
+                }
                 onHome={app.goHome}
-                elapsedMs={app.lastSession && Date.now() - app.lastSession.startedAt}
+                elapsedMs={
+                  app.lastSession && Date.now() - app.lastSession.startedAt
+                }
               />
             )}
 
-            {app.screen === 'settings' && (
+            {app.screen === "settings" && (
               <SettingsScreen
                 settings={app.settings}
-                onChange={(patch) => app.setSettings((s) => ({ ...s, ...patch }))}
+                onChange={(patch) =>
+                  app.setSettings((s) => ({ ...s, ...patch }))
+                }
                 onReset={() => {
                   // Reset all settings except theme (don't surprise the user).
                   app.setSettings((s) => ({
                     theme: s.theme,
-                    strictness: 'normal',
+                    strictness: "normal",
                     soundEffects: false,
                     showTimer: true,
                     autoAdvanceMs: 0,
                     enterSubmits: true,
-                  }))
+                  }));
                 }}
                 onBack={app.goHome}
                 onExport={handleExport}
                 onImport={handleImportFile}
                 onResetAllData={() => {
-                  if (confirm('Erase all topics and progress? This cannot be undone.')) {
-                    app.resetAllData()
+                  if (
+                    confirm(
+                      "Erase all topics and progress? This cannot be undone.",
+                    )
+                  ) {
+                    app.resetAllData();
                   }
                 }}
               />
@@ -248,5 +269,5 @@ export default function App() {
         </AnimatePresence>
       </div>
     </AppShell>
-  )
+  );
 }
