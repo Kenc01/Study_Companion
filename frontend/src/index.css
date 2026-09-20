@@ -1,166 +1,126 @@
 @import "tailwindcss";
 
-.pencil-loader {
+.orbital-loader {
   display: grid;
   min-height: 60vh;
   place-items: center;
   color: hsl(var(--primary));
 }
 
-.pencil-loader__svg {
+.orbital-loader__frame {
+  position: relative;
+  width: min(300px, 72vw);
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  transform-style: preserve-3d;
+}
+
+.orbital-loader__layer {
+  position: absolute;
   display: block;
-  width: 10em;
-  height: 10em;
+  width: 100%;
+  height: 100%;
+  fill: none;
+  overflow: visible;
+  transition: transform 0.5s ease;
 }
 
-.pencil__body1,
-.pencil__body2,
-.pencil__body3,
-.pencil__eraser,
-.pencil__eraser-skew,
-.pencil__point,
-.pencil__rotate,
-.pencil__stroke {
-  animation-duration: 3s;
-  animation-timing-function: linear;
-  animation-iteration-count: infinite;
+.orbital-loader__outline {
+  stroke: #00ffff;
+  stroke-width: 1.5;
+  opacity: 0.35;
 }
 
-.pencil__body1,
-.pencil__body2,
-.pencil__body3 {
-  transform: rotate(-90deg);
-}
-.pencil__body1 {
-  animation-name: pencilBody1;
-}
-.pencil__body2 {
-  animation-name: pencilBody2;
-}
-.pencil__body3 {
-  animation-name: pencilBody3;
-}
-.pencil__eraser {
-  animation-name: pencilEraser;
-  transform: rotate(-90deg) translate(49px, 0);
-}
-.pencil__eraser-skew {
-  animation-name: pencilEraserSkew;
-  animation-timing-function: ease-in-out;
-}
-.pencil__point {
-  animation-name: pencilPoint;
-  transform: rotate(-90deg) translate(49px, -30px);
-}
-.pencil__rotate {
-  animation-name: pencilRotate;
-}
-.pencil__stroke {
-  animation-name: pencilStroke;
-  transform: translate(100px, 100px) rotate(-113deg);
+.orbital-loader__cutout {
+  fill: hsl(var(--page));
 }
 
-@keyframes pencilBody1 {
-  from,
+.orbital-loader__segments {
+  stroke: #00ffff;
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-dasharray: 2 20;
+  animation: orbital-spin 7s ease-in-out infinite alternate;
+}
+
+.orbital-loader__segment--two {
+  stroke-dasharray: 2 34;
+  stroke-dashoffset: 18;
+  opacity: 0.75;
+}
+
+.orbital-loader__segment--three {
+  stroke-dasharray: 2 48;
+  stroke-dashoffset: 30;
+  opacity: 0.5;
+}
+
+.orbital-loader__inner {
+  animation: orbital-spin 4s ease-in-out infinite alternate-reverse;
+}
+
+.orbital-loader__core {
+  animation: orbital-spin 2.5s ease-in-out infinite alternate;
+}
+
+.orbital-loader__arc {
+  stroke: #00ffff;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-dasharray: 1 8;
+}
+
+.orbital-loader__arc--reverse {
+  stroke-dashoffset: 4;
+}
+
+.orbital-loader__arc--yellow {
+  stroke: #ffff00;
+  stroke-width: 4;
+  stroke-dasharray: 1 6;
+}
+
+.orbital-loader__center-ring {
+  stroke: #00ffff;
+  stroke-width: 3;
+  animation: orbital-pulse 2s ease-in-out infinite alternate;
+}
+
+.orbital-loader__center-dot {
+  fill: #ffff00;
+  animation: orbital-pulse 2s ease-in-out infinite alternate-reverse;
+}
+
+.orbital-loader__frame:hover .orbital-loader__layer:nth-child(1) {
+  transform: rotate(-18deg) translate(-4px, 3px);
+}
+
+.orbital-loader__frame:hover .orbital-loader__layer:nth-child(2) {
+  transform: rotate(25deg) translate(8px, -6px);
+}
+
+.orbital-loader__frame:hover .orbital-loader__layer:nth-child(3) {
+  transform: rotate(-32deg) translate(-8px, -5px);
+}
+
+@keyframes orbital-spin {
   to {
-    stroke-dashoffset: 351.86;
-    transform: rotate(-90deg);
-  }
-  50% {
-    stroke-dashoffset: 150.8;
-    transform: rotate(-225deg);
+    transform: rotate(360deg);
   }
 }
-@keyframes pencilBody2 {
-  from,
+
+@keyframes orbital-pulse {
   to {
-    stroke-dashoffset: 406.84;
-    transform: rotate(-90deg);
-  }
-  50% {
-    stroke-dashoffset: 174.36;
-    transform: rotate(-225deg);
+    transform: scale(1.16);
   }
 }
-@keyframes pencilBody3 {
-  from,
-  to {
-    stroke-dashoffset: 296.88;
-    transform: rotate(-90deg);
-  }
-  50% {
-    stroke-dashoffset: 127.23;
-    transform: rotate(-225deg);
-  }
-}
-@keyframes pencilEraser {
-  from,
-  to {
-    transform: rotate(-45deg) translate(49px, 0);
-  }
-  50% {
-    transform: rotate(0deg) translate(49px, 0);
-  }
-}
-@keyframes pencilEraserSkew {
-  from,
-  32.5%,
-  67.5%,
-  to {
-    transform: skewX(0);
-  }
-  35%,
-  65% {
-    transform: skewX(-4deg);
-  }
-  37.5%,
-  62.5% {
-    transform: skewX(8deg);
-  }
-  40%,
-  45%,
-  50%,
-  55%,
-  60% {
-    transform: skewX(-15deg);
-  }
-  42.5%,
-  47.5%,
-  52.5%,
-  57.5% {
-    transform: skewX(15deg);
-  }
-}
-@keyframes pencilPoint {
-  from,
-  to {
-    transform: rotate(-90deg) translate(49px, -30px);
-  }
-  50% {
-    transform: rotate(-225deg) translate(49px, -30px);
-  }
-}
-@keyframes pencilRotate {
-  from {
-    transform: translate(100px, 100px) rotate(0);
-  }
-  to {
-    transform: translate(100px, 100px) rotate(720deg);
-  }
-}
-@keyframes pencilStroke {
-  from {
-    stroke-dashoffset: 439.82;
-    transform: translate(100px, 100px) rotate(-113deg);
-  }
-  50% {
-    stroke-dashoffset: 164.93;
-    transform: translate(100px, 100px) rotate(-113deg);
-  }
-  75%,
-  to {
-    stroke-dashoffset: 439.82;
-    transform: translate(100px, 100px) rotate(112deg);
+
+@media (prefers-reduced-motion: reduce) {
+  .orbital-loader__layer,
+  .orbital-loader__center-ring,
+  .orbital-loader__center-dot {
+    animation: none;
   }
 }
 
