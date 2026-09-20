@@ -6,6 +6,7 @@ import mongoose from "mongoose";
 interface TopicDocument extends mongoose.Document {
   id: string;
   name: string;
+  subject?: string;
   tags?: string[];
   color?: number;
   rawNotes: string;
@@ -40,6 +41,7 @@ const topicSchema = new mongoose.Schema<TopicDocument>(
   {
     id: { type: String, required: true, unique: true, index: true },
     name: { type: String, required: true, trim: true },
+    subject: { type: String, trim: true },
     tags: { type: [String], default: [] },
     color: { type: Number, min: 0, max: 5 },
     rawNotes: { type: String, default: "" },

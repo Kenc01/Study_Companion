@@ -17,9 +17,11 @@ import {
 import { isDue, qualityFromResult, schedule } from "@/lib/srs";
 import {
   loadSettings,
+  loadTopics,
   loadSubjects,
   masteryKey,
   saveSettings,
+  saveTopics,
   saveSubjects,
 } from "@/lib/storage";
 import {
@@ -142,7 +144,7 @@ export interface UseQuizState {
 
 export function useQuizState(): UseQuizState {
   const [isLoading, setIsLoading] = React.useState(true);
-  const [topics, setTopics] = React.useState<Topic[]>([]);
+  const [topics, setTopics] = React.useState<Topic[]>(() => loadTopics() ?? []);
   const [subjects, setSubjects] = React.useState<Subject[]>(
     () => loadSubjects() ?? [],
   );
@@ -172,6 +174,10 @@ export function useQuizState(): UseQuizState {
   }, [subjects]);
 
   React.useEffect(() => {
+    saveTopics(topics);
+  }, [topics]);
+
+  React.useEffect(() => {
     let active = true;
     void Promise.all([
       loadRemoteTopics(),
@@ -179,7 +185,18 @@ export function useQuizState(): UseQuizState {
       loadRemoteSubjects(),
     ]).then(([remoteTopics, remoteMastery, remoteSubjects]) => {
       if (!active) return;
-      if (remoteTopics?.length) setTopics(remoteTopics);
+      if (remoteTopics?.length) {
+        const localTopics = loadTopics() ?? [];
+        const localById = new Map(
+          localTopics.map((topic) => [topic.id, topic]),
+        );
+        setTopics(
+          remoteTopics.map((topic) => ({
+            ...topic,
+            subject: topic.subject || localById.get(topic.id)?.subject,
+          })),
+        );
+      }
       if (remoteMastery) setMastery(remoteMastery);
       if (remoteSubjects?.length) setSubjects(remoteSubjects);
       if (!remoteSubjects?.length && remoteTopics?.length) {
