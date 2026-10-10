@@ -190,11 +190,23 @@ export function useQuizState(): UseQuizState {
         const localById = new Map(
           localTopics.map((topic) => [topic.id, topic]),
         );
-        setTopics(
-          remoteTopics.map((topic) => ({
+        const mergedById = new Map<string, Topic>();
+        for (const topic of remoteTopics) {
+          mergedById.set(topic.id, {
             ...topic,
             subject: topic.subject || localById.get(topic.id)?.subject,
-          })),
+          });
+        }
+        for (const localTopic of localTopics) {
+          const remoteTopic = mergedById.get(localTopic.id);
+          if (!remoteTopic || localTopic.updatedAt >= remoteTopic.updatedAt) {
+            mergedById.set(localTopic.id, localTopic);
+          }
+        }
+        setTopics(
+          [...mergedById.values()].sort(
+            (a, b) => b.updatedAt - a.updatedAt,
+          ),
         );
       }
       if (remoteMastery) setMastery(remoteMastery);

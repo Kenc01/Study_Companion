@@ -1,8 +1,8 @@
 # Study Companion
 
 A calm, focused flashcard quiz app. Paste your fill-in-the-blank notes, and each topic
-becomes its own quiz deck with per-question mastery tracking. **Frontend only** — everything
-lives in `localStorage`, no backend or API.
+becomes its own quiz deck with per-question mastery tracking. Data is saved in browser
+`localStorage`; an optional API can sync topics, subjects, and mastery records remotely.
 
 ## Run it
 
@@ -93,9 +93,11 @@ Colors are defined as CSS variables in `src/index.css` and exposed to Tailwind v
 
 ## Data & resilience
 
-Two keys: `study-companion:topics:v1` and `study-companion:mastery:v1`. Both are validated and
-sanitized on read — corrupted or unparseable data is discarded rather than crashing the app.
-Sample topics are seeded **only** when no saved data exists (an empty library stays empty).
+Topics, subjects, mastery, and settings are validated and sanitized when read from
+`localStorage`. When `VITE_API_BASE_URL` is configured, topics, subjects, and mastery records
+are also loaded from the API. Startup keeps local quizzes missing from the remote library and
+uses the copy with the newer `updatedAt` when both stores contain the same quiz. This preserves
+quizzes created while the API is unavailable. Settings remain browser-local.
 
 ## Accessibility
 
